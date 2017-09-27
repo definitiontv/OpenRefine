@@ -61,9 +61,12 @@ public class HtmlTableExporter implements WriterExporter {
             public void startFile(JSONObject options) {
                 try {
                     writer.write("<html>\n");
-                    writer.write("<head><title>"); 
+                    writer.write("<head>\n");
+                    writer.write("<title>"); 
                     writer.write(ProjectManager.singleton.getProjectMetadata(project.id).getName());
-                    writer.write("</title></head>\n");
+                    writer.write("</title>\n");
+                    writer.write("<meta charset=\"utf-8\" />\n");
+                    writer.write("</head>\n");
     
                     writer.write("<body>\n");
                     writer.write("<table>\n");
@@ -99,10 +102,11 @@ public class HtmlTableExporter implements WriterExporter {
                             if (cellData != null && cellData.text != null) {
                                 if (cellData.link != null) {
                                     writer.write("<a href=\"");
+                                    // TODO: The escape below looks wrong, but is probably harmless in most cases
                                     writer.write(StringEscapeUtils.escapeHtml(cellData.link));
                                     writer.write("\">");
                                 }
-                                writer.write(cellData.text);
+                                writer.write(StringEscapeUtils.escapeXml(cellData.text));
                                 if (cellData.link != null) {
                                     writer.write("</a>");
                                 }

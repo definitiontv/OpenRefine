@@ -103,6 +103,7 @@ DataTableColumnHeaderUI.extendMenu(function(column, columnHeaderUI, menu) {
     elmts.or_views_onErr.text($.i18n._('core-views')["on-error"]);
     elmts.or_views_setBlank.text($.i18n._('core-views')["set-blank"]);
     elmts.or_views_storeErr.text($.i18n._('core-views')["store-err"]);
+    elmts.or_views_cacheResponses.text($.i18n._('core-views')["cache-responses"]);
     elmts.or_views_urlFetch.text($.i18n._('core-views')["url-fetch"]);
     elmts.okButton.html($.i18n._('core-buttons')["ok"]);
     elmts.cancelButton.text($.i18n._('core-buttons')["cancel"]);
@@ -135,13 +136,41 @@ DataTableColumnHeaderUI.extendMenu(function(column, columnHeaderUI, menu) {
           newColumnName: columnName, 
           columnInsertIndex: columnIndex + 1,
           delay: elmts.throttleDelayInput[0].value,
-          onError: $('input[name="dialog-onerror-choice"]:checked')[0].value
+          onError: $('input[name="dialog-onerror-choice"]:checked')[0].value,
+          cacheResponses: $('input[name="dialog-cache-responses"]')[0].checked,
         },
         null,
         { modelsChanged: true }
       );
       dismiss();
     });
+  };
+
+  var doAddColumnByReconciliation = function() {
+    var columnIndex = Refine.columnNameToColumnIndex(column.name);
+    var o = DataTableView.sampleVisibleRows(column);
+    new ExtendReconciledDataPreviewDialog(
+      column, 
+      columnIndex, 
+      o.rowIndices,
+      function(extension, endpoint, identifierSpace, schemaSpace) {
+        Refine.postProcess(
+            "core",
+            "extend-data", 
+            {
+              baseColumnName: column.name,
+	      endpoint: endpoint,
+              identifierSpace: identifierSpace,
+              schemaSpace: schemaSpace,
+              columnInsertIndex: columnIndex + 1
+            },
+            {
+              extension: JSON.stringify(extension)
+            },
+            { rowsChanged: true, modelsChanged: true }
+        );
+      }
+    );
   };
 
   var doRemoveColumn = function() {
@@ -184,7 +213,7 @@ DataTableColumnHeaderUI.extendMenu(function(column, columnHeaderUI, menu) {
 
   var doMoveColumnBy = function(change) {
     var newidx = Refine.columnNameToColumnIndex(column.name) + change;
-    if (newidx > 0 && newidx < Refine.columnNameToColumnIndex(column.name)) {
+    if (newidx >= 0) {
       Refine.postCoreProcess(
           "move-column", 
           {
@@ -295,6 +324,11 @@ DataTableColumnHeaderUI.extendMenu(function(column, columnHeaderUI, menu) {
         id: "core/add-column-by-fetching-urls",
         label: $.i18n._('core-views')["add-by-urls"]+"...",
         click: doAddColumnByFetchingURLs
+      },
+      {
+        id: "core/add-column-by-reconciliation",
+        label: $.i18n._('core-views')["add-col-recon-val"]+"...",
+        click: doAddColumnByReconciliation
       },
       {},
       {
